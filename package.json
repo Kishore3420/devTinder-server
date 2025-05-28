@@ -1,0 +1,20 @@
+{
+  "name": "dev-tinder-server",
+  "version": "1.0.0",
+  "description": "tender for developers",
+  "keywords": [
+    "node",
+    "javascript"
+  ],
+  "license": "ISC",
+  "author": "Babu",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon --watch src --exec node src/app.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
