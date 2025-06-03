@@ -39,8 +39,7 @@ const handleValidationError = (
 
 // Input validation helper
 const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return validator.isEmail(email);
 };
 
 const validatePassword = (password: string): boolean => {
@@ -56,8 +55,7 @@ const validatePassword = (password: string): boolean => {
 
 const validateName = (name: string): boolean => {
   // Only letters, spaces, hyphens, apostrophes
-  const nameRegex = /^[a-zA-Z\s\-']{2,50}$/;
-  return nameRegex.test(name);
+  return validator.isAlpha(name);
 };
 
 const validateObjectId = (id: string): boolean => {
