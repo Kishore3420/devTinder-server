@@ -5,6 +5,8 @@ import { UserModel } from '../models/user';
 import { User } from '../types/user';
 import { NotFoundError, ConflictError } from '../utils/errors';
 
+const { BCRYPT_SALT_ROUNDS } = process.env;
+
 // Helper function to sanitize user data
 const sanitizeUserData = (data: User): Partial<User> => {
   const sanitized: User = { ...data };
@@ -54,7 +56,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
   }
 
   // Hash password
-  const saltRounds = 12;
+  const saltRounds = BCRYPT_SALT_ROUNDS ? parseInt(BCRYPT_SALT_ROUNDS, 10) : 12;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
   // Prepare user object

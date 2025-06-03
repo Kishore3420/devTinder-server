@@ -1,4 +1,4 @@
-// app.ts
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import { connectDB } from './config/database';
 import userRoutes from './routes/userRoutes';
@@ -7,7 +7,6 @@ import { NotFoundError } from './utils/errors';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
