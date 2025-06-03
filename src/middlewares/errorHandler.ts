@@ -1,0 +1,93 @@
+// middlewares/errorHandler.ts
+import { Request, Response, NextFunction } from 'express';
+import { AppError } from '../utils/errors';
+
+interface ErrorResponse {
+  message: string;
+  details?: Record<string, unknown>;
+  stack?: string;
+}
+
+export const handleMongooseValidationError = (error: any): AppError => {
+  if (error.name === 'ValidationError') {
+    const errors: Record<string, string> = {};
+    Object.keys(error.errors).forEach(key => {
+      errors[key] = error.errors[key].message;
+    });
+    return new AppError('Validation failed', 400, { errors });
+  }
+
+  if (error.code === 11000) {
+    const field = Object.keys(error.keyPattern)[0];
+    return new AppError(`${field} already exists`, 409);
+  }
+
+  if (error.name === 'CastError') {
+    return new AppError('Invalid resource ID', 400);
+  }
+
+  return error;
+};
+
+export const globalErrorHandler = (
+  error: any,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction
+): void => {
+  // Handle mongoose errors
+  if (
+    error.name === 'ValidationError' ||
+    error.code === 11000 ||
+    error.name === 'CastError'
+  ) {
+    error = handleMongooseValidationError(error);
+  }
+
+  // Default error values
+  let statusCode = 500;
+  let message = 'Internal server error';
+  let details: Record<string, unknown> | undefined;
+
+  // Handle operational errors
+  if (error instanceof AppError) {
+    statusCode = error.statusCode;
+    message = error.message;
+    details = error.details;
+  }
+
+  // Log error for debugging
+  console.error('Error:', {
+    message: error.message,
+    stack: error.stack,
+    url: req.url,
+    method: req.method,
+    body: req.body,
+    params: req.params,
+    query: req.query,
+  });
+
+  // Prepare response
+  const errorResponse: ErrorResponse = {
+    message,
+    ...(details && { details }),
+  };
+
+  // Include stack trace in development
+  if (process.env.NODE_ENV === 'development' && error.stack) {
+    errorResponse.stack = error.stack;
+  }
+
+  // Ensure we're sending JSON response
+  res.status(statusCode).json(errorResponse);
+};
+
+// Async error wrapper
+export const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
+) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
