@@ -4,12 +4,14 @@ import { connectDB } from './config/database';
 import userRoutes from './routes/userRoutes';
 import { globalErrorHandler } from './middlewares/errorHandler';
 import { NotFoundError } from './utils/errors';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
