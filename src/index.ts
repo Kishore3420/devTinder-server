@@ -29,6 +29,7 @@ app.all('*', (req, res, next) => {
 });
 
 // Global error handling middleware (must be last)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandler(err, req, res, next);
 });
@@ -45,6 +46,7 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle unhandled promise rejections
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
@@ -68,6 +70,7 @@ const startServer = async (): Promise<void> => {
     });
 
     // Handle server errors
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     server.on('error', (error: any) => {
       if (error.code === 'EADDRINUSE') {
         console.error(`❌ Port ${PORT} is already in use`);

@@ -7,7 +7,7 @@ interface ErrorResponse {
   details?: Record<string, unknown>;
   stack?: string;
 }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const handleMongooseValidationError = (error: any): AppError => {
   if (error.name === 'ValidationError') {
     const errors: Record<string, string> = {};
@@ -30,6 +30,7 @@ export const handleMongooseValidationError = (error: any): AppError => {
 };
 
 export const globalErrorHandler = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: any,
   req: Request,
   res: Response,
