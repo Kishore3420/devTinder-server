@@ -8,6 +8,7 @@ import {
   getAllUsers,
   updateUser,
   deleteUser,
+  getUserProfile,
 } from '../controllers/userController';
 import {
   validateSignup,
@@ -16,19 +17,37 @@ import {
   validateUserId,
   validateEmailQuery,
   validatePaginationQuery,
-} from '../middlewares/validation';
+} from '../middlewares/validationHandler';
+
+// import { validateUserProfile } from '../middlewares/userProfileValidation';
+import { userAuthentication } from '../middlewares/authenticationHandler';
 import { asyncHandler } from '../middlewares/errorHandler';
 
 const router = Router();
 
 // GET /user/:userId - Get user by ID
-router.get('/user/:userId', validateUserId, asyncHandler(getUserById));
+router.get(
+  '/user/:userId',
+  userAuthentication,
+  validateUserId,
+  asyncHandler(getUserById)
+);
 
 // GET /user?emailId=email - Get user by email
-router.get('/user', validateEmailQuery, asyncHandler(getUserByEmail));
+router.get(
+  '/user',
+  userAuthentication,
+  validateEmailQuery,
+  asyncHandler(getUserByEmail)
+);
 
 // GET /feed - Get all users with pagination
-router.get('/feed', validatePaginationQuery, asyncHandler(getAllUsers));
+router.get(
+  '/feed',
+  userAuthentication,
+  validatePaginationQuery,
+  asyncHandler(getAllUsers)
+);
 
 // POST /signup - Create new user
 router.post('/signup', validateSignup, asyncHandler(signup));
@@ -38,12 +57,21 @@ router.post('/login', validateLogin, asyncHandler(login));
 // PATCH /user/:userId - Update user by ID
 router.patch(
   '/user/:userId',
+  userAuthentication,
   validateUserId,
   validateUpdate,
   asyncHandler(updateUser)
 );
 
 // DELETE /user/:userId - Delete user by ID
-router.delete('/user/:userId', validateUserId, asyncHandler(deleteUser));
+router.delete(
+  '/user/:userId',
+  userAuthentication,
+  validateUserId,
+  asyncHandler(deleteUser)
+);
+
+//GET USER PROFILE
+router.get('/profile', userAuthentication, asyncHandler(getUserProfile));
 
 export default router;

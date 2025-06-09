@@ -9,15 +9,6 @@ import {
 } from '../utils/validators';
 import { BadRequestError } from '../utils/errors';
 
-declare module 'express' {
-  interface Request {
-    pagination?: {
-      page: number;
-      limit: number;
-    };
-  }
-}
-
 export const validateSignup = (
   req: Request,
   _res: Response,

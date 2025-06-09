@@ -1,5 +1,7 @@
 import { User } from '../types/user';
 import { Schema, model } from 'mongoose';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import validator from 'validator';
 
 const userSchema = new Schema<User>(
@@ -223,6 +225,19 @@ userSchema.methods.getPublicProfile = function (): User {
   const userObject = this.toObject();
   delete userObject.password;
   return userObject;
+};
+
+// Instance method to validate password
+userSchema.methods.validatePassword = async function (
+  passwordInputByUser: string
+): Promise<boolean> {
+  const actualPassword = this.password;
+  return await bcrypt.compare(passwordInputByUser, actualPassword);
+};
+userSchema.methods.getJWT = async function (): Promise<string> {
+  const secret = process.env.JWT_SECRET || 'DEV@TINDER';
+  const token = jwt.sign({ userId: this._id }, secret, { expiresIn: '1h' });
+  return token;
 };
 
 // Static method to find users by skill

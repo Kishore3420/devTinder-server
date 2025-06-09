@@ -9,4 +9,7 @@ export type User = {
   photoUrl?: string;
   about?: string;
   skills?: string[];
+  getPublicProfile(): Partial<User>;
+  getJWT(): Promise<string>;
+  validatePassword(password: string): boolean;
 };

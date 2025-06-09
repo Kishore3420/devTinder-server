@@ -1,8 +1,8 @@
-// controllers/userController.ts
+import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { UserModel } from '../models/user';
-import { User } from '../types/user';
+import { User } from '../types';
 import { NotFoundError, ConflictError } from '../utils/errors';
 
 const { BCRYPT_SALT_ROUNDS } = process.env;
@@ -88,8 +88,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
   const savedUser = await user.save();
 
   // Remove password from response
-  const userResponse = savedUser.toObject();
-  delete (userResponse as { password?: string }).password;
+  const userResponse = savedUser.getPublicProfile();
 
   res.status(201).json({
     message: 'User created successfully',
@@ -104,17 +103,26 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const user = await UserModel.findOne({
     emailId: emailId.toLowerCase(),
   }).select('+password');
+
   if (!user) {
     throw new NotFoundError('User not found');
   }
   // Check password
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  const isPasswordValid = user.validatePassword(password);
   if (!isPasswordValid) {
     throw new NotFoundError('Invalid email or password');
   }
-  // Remove password from response
-  const userResponse = user.toObject();
-  delete (userResponse as { password?: string }).password;
+
+  // Generate a token
+  const token = await user.getJWT();
+  // Set token in cookies
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    maxAge: 3600000, // 1 hour
+  });
+
+  const userResponse = user.getPublicProfile();
 
   res.status(200).json({
     message: 'Login successful',
@@ -223,5 +231,21 @@ export const deleteUser = async (
 
   res.status(200).json({
     message: 'User deleted successfully',
+  });
+};
+
+export const getUserProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const user = req.user;
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  res.status(200).json({
+    message: 'User profile retrieved successfully',
+    user,
   });
 };
