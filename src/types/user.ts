@@ -11,5 +11,5 @@ export type User = {
   skills?: string[];
   getPublicProfile(): Partial<User>;
   getJWT(): Promise<string>;
-  validatePassword(password: string): boolean;
+  verifyPassword(password: string): boolean;
 };

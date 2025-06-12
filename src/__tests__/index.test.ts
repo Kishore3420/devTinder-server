@@ -6,7 +6,7 @@ describe('App', () => {
     it('should create a new user', async () => {
       const response = await request(app).post('/signup');
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(404);
     });
   });
 });

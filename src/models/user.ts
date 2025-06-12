@@ -55,7 +55,6 @@ const userSchema = new Schema<User>(
       minlength: [8, 'Password must be at least 8 characters long'],
       validate: {
         validator: function (password: string): boolean {
-          // At least 8 characters, one uppercase, one lowercase, one number
           return validator.isStrongPassword(password, {
             minLength: 8,
             minLowercase: 1,
@@ -67,7 +66,7 @@ const userSchema = new Schema<User>(
         message:
           'Password must contain at least one uppercase letter, one lowercase letter, and one number',
       },
-      select: false, // Exclude password from queries by default
+      select: false,
     },
     age: {
       type: Number,
@@ -88,7 +87,7 @@ const userSchema = new Schema<User>(
         message: 'Gender must be M (Male), F (Female), or O (Other)',
       },
       default: 'M',
-      uppercase: true, // Automatically convert to uppercase
+      uppercase: true,
     },
     photoUrl: {
       type: String,
@@ -117,8 +116,7 @@ const userSchema = new Schema<User>(
         validator: function (value: string): boolean {
           if (!value) {
             return true;
-          } // Allow empty
-          // Check for potentially harmful content (basic XSS prevention)
+          }
           return !/<script|javascript:|on\w+=/i.test(value);
         },
         message: 'About section contains invalid content',
@@ -136,7 +134,6 @@ const userSchema = new Schema<User>(
         },
         {
           validator: function (skills: string[]): boolean {
-            // Check each skill is valid
             return skills.every(skill => {
               if (typeof skill !== 'string') {
                 return false;
@@ -150,7 +147,6 @@ const userSchema = new Schema<User>(
         },
         {
           validator: function (skills: string[]): boolean {
-            // Check for duplicates (case-insensitive)
             const lowerCaseSkills = skills.map(skill =>
               skill.toLowerCase().trim()
             );
@@ -162,23 +158,19 @@ const userSchema = new Schema<User>(
     },
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
-    versionKey: false, // Remove __v field
+    timestamps: true,
+    versionKey: false,
   }
 );
 
-// Indexes for better query performance
-// Note: emailId index is automatically created by unique: true
 userSchema.index({ createdAt: -1 });
 userSchema.index({ firstName: 1, lastName: 1 });
 
-// Pre-save middleware to trim and clean skills
 userSchema.pre('save', function (next) {
   if (this.skills && this.skills.length > 0) {
     this.skills = this.skills
       .map(skill => skill.trim())
       .filter(skill => skill.length > 0);
-    // Remove duplicates (case-insensitive)
     const uniqueSkills = [];
     const seenSkills = new Set();
     for (const skill of this.skills) {
@@ -193,14 +185,12 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// Pre-update middleware for findOneAndUpdate operations
 userSchema.pre('findOneAndUpdate', function (next) {
   const update = this.getUpdate() as { $set?: { skills?: string[] } };
 
   if (update.$set && update.$set.skills) {
     const skills = update.$set.skills;
     if (Array.isArray(skills)) {
-      // Clean and deduplicate skills
       const cleanedSkills = skills
         .map(skill => skill.trim())
         .filter(skill => skill.length > 0);
@@ -220,15 +210,13 @@ userSchema.pre('findOneAndUpdate', function (next) {
   next();
 });
 
-// Instance method to get public profile (without sensitive data)
 userSchema.methods.getPublicProfile = function (): User {
   const userObject = this.toObject();
   delete userObject.password;
   return userObject;
 };
 
-// Instance method to validate password
-userSchema.methods.validatePassword = async function (
+userSchema.methods.verifyPassword = async function (
   passwordInputByUser: string
 ): Promise<boolean> {
   const actualPassword = this.password;
@@ -240,19 +228,16 @@ userSchema.methods.getJWT = async function (): Promise<string> {
   return token;
 };
 
-// Static method to find users by skill
 userSchema.statics.findBySkill = function (skill: string): Promise<User[]> {
   return this.find({ skills: { $regex: new RegExp(skill, 'i') } }).select(
     '-password'
   );
 };
 
-// Virtual for full name
 userSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`.trim();
 });
 
-// Ensure virtual fields are serialized
 userSchema.set('toJSON', { virtuals: true });
 
 export const UserModel = model<User>('User', userSchema);

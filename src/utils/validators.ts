@@ -1,8 +1,8 @@
-// utils/validators.ts
 import validator from 'validator';
 import mongoose from 'mongoose';
 import { User } from '../types/user';
-import { ValidationError } from './errors';
+import { BadRequestError, ValidationError } from './errors';
+import { ConnectionRequests } from '../types';
 
 export const validateEmail = (email: string): boolean => {
   return validator.isEmail(email);
@@ -47,6 +47,10 @@ export const validateGender = (gender: string): boolean => {
   return ['M', 'F', 'O'].includes(gender);
 };
 
+export const validateStatus = (status: string): boolean => {
+  return ['ignore', 'interested', 'accepted', 'rejected'].includes(status);
+};
+
 export const validateSkills = (skills: string[]): boolean => {
   if (!Array.isArray(skills)) {
     return false;
@@ -69,7 +73,6 @@ export const validatePagination = (page: number, limit: number): boolean => {
   return page >= 1 && limit >= 1 && limit <= 100;
 };
 
-// Schema validation functions
 export const validateSignupData = (data: User): void => {
   const {
     firstName,
@@ -83,14 +86,12 @@ export const validateSignupData = (data: User): void => {
     skills,
   } = data;
 
-  // Required fields
   if (!firstName || !lastName || !emailId || !password) {
     throw new ValidationError('All required fields must be provided', {
       required: ['firstName', 'lastName', 'emailId', 'password'],
     });
   }
 
-  // Validate individual fields
   if (!validateName(firstName)) {
     throw new ValidationError(
       'First name must contain only letters, and spaces'
@@ -157,7 +158,6 @@ export const validateUpdateData = (data: User): void => {
     });
   }
 
-  // Validate individual fields if present
   if (data.firstName && !validateName(data.firstName)) {
     throw new ValidationError(
       'First name must contain only letters and spaces'
@@ -188,5 +188,39 @@ export const validateUpdateData = (data: User): void => {
     throw new ValidationError(
       'Skills must be an array of max 10 non-empty strings (max 50 chars each)'
     );
+  }
+};
+
+export const validateMakeConnectionRequestData = (
+  data: ConnectionRequests | undefined
+): void => {
+  const { toUserId, status } = data || {};
+  if (!toUserId || !status) {
+    throw new ValidationError('All required fields must be provided', {
+      required: ['toUserId', 'status'],
+    });
+  }
+  if (!validateObjectId(toUserId.toString())) {
+    throw new BadRequestError('Invalid user ID format');
+  }
+  if (!['ignore', 'interested'].includes(status)) {
+    throw new ValidationError('Status must be either "ignore" or "interested"');
+  }
+};
+
+export const validateReviewConnectionRequestData = (
+  data: ConnectionRequests | undefined
+): void => {
+  const { toUserId, status } = data || {};
+  if (!toUserId || !status) {
+    throw new ValidationError('All required fields must be provided', {
+      required: ['toUserId', 'status'],
+    });
+  }
+  if (!validateObjectId(toUserId.toString())) {
+    throw new BadRequestError('Invalid user ID format');
+  }
+  if (!['accepted', 'rejected'].includes(status)) {
+    throw new ValidationError('Status must be either "accepted" or "rejected"');
   }
 };

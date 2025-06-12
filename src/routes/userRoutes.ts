@@ -1,77 +1,33 @@
-// routes/userRoutes.ts
 import { Router } from 'express';
 import {
-  signup,
-  login,
-  getUserByEmail,
-  getUserById,
+  getUserRequests,
+  getUserConnections,
   getAllUsers,
-  updateUser,
-  deleteUser,
-  getUserProfile,
 } from '../controllers/userController';
-import {
-  validateSignup,
-  validateLogin,
-  validateUpdate,
-  validateUserId,
-  validateEmailQuery,
-  validatePaginationQuery,
-} from '../middlewares/validationHandler';
 
-// import { validateUserProfile } from '../middlewares/userProfileValidation';
 import { userAuthentication } from '../middlewares/authenticationHandler';
 import { asyncHandler } from '../middlewares/errorHandler';
+import { validatePaginationQuery } from '../middlewares/validationHandler';
 
 const router = Router();
 
-// GET /user/:userId - Get user by ID
 router.get(
-  '/user/:userId',
+  '/requests/received',
   userAuthentication,
-  validateUserId,
-  asyncHandler(getUserById)
+  asyncHandler(getUserRequests)
 );
 
-// GET /user?emailId=email - Get user by email
 router.get(
-  '/user',
+  '/requests/connections',
   userAuthentication,
-  validateEmailQuery,
-  asyncHandler(getUserByEmail)
+  asyncHandler(getUserConnections)
 );
 
-// GET /feed - Get all users with pagination
 router.get(
   '/feed',
   userAuthentication,
   validatePaginationQuery,
   asyncHandler(getAllUsers)
 );
-
-// POST /signup - Create new user
-router.post('/signup', validateSignup, asyncHandler(signup));
-
-//POST /login - Login user
-router.post('/login', validateLogin, asyncHandler(login));
-// PATCH /user/:userId - Update user by ID
-router.patch(
-  '/user/:userId',
-  userAuthentication,
-  validateUserId,
-  validateUpdate,
-  asyncHandler(updateUser)
-);
-
-// DELETE /user/:userId - Delete user by ID
-router.delete(
-  '/user/:userId',
-  userAuthentication,
-  validateUserId,
-  asyncHandler(deleteUser)
-);
-
-//GET USER PROFILE
-router.get('/profile', userAuthentication, asyncHandler(getUserProfile));
 
 export default router;

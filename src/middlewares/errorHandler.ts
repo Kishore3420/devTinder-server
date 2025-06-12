@@ -1,4 +1,3 @@
-// middlewares/errorHandler.ts
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
 
@@ -37,7 +36,6 @@ export const globalErrorHandler = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ): void => {
-  // Handle mongoose errors
   if (
     error.name === 'ValidationError' ||
     error.code === 11000 ||
@@ -46,19 +44,16 @@ export const globalErrorHandler = (
     error = handleMongooseValidationError(error);
   }
 
-  // Default error values
   let statusCode = 500;
   let message = 'Internal server error';
   let details: Record<string, unknown> | undefined;
 
-  // Handle operational errors
   if (error instanceof AppError) {
     statusCode = error.statusCode;
     message = error.message;
     details = error.details;
   }
 
-  // Log error for debugging
   console.error('Error:', {
     message: error.message,
     stack: error.stack,
@@ -69,22 +64,18 @@ export const globalErrorHandler = (
     query: req.query,
   });
 
-  // Prepare response
   const errorResponse: ErrorResponse = {
     message,
     ...(details && { details }),
   };
 
-  // Include stack trace in development
   if (process.env.NODE_ENV === 'development' && error.stack) {
     errorResponse.stack = error.stack;
   }
 
-  // Ensure we're sending JSON response
   res.status(statusCode).json(errorResponse);
 };
 
-// Async error wrapper
 export const asyncHandler = (
   fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ) => {

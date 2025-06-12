@@ -1,4 +1,3 @@
-// middlewares/validation.ts
 import { Request, Response, NextFunction } from 'express';
 import {
   validateObjectId,
@@ -6,6 +5,9 @@ import {
   validatePagination,
   validateSignupData,
   validateUpdateData,
+  validatePassword,
+  validateMakeConnectionRequestData,
+  validateReviewConnectionRequestData,
 } from '../utils/validators';
 import { BadRequestError } from '../utils/errors';
 
@@ -16,6 +18,32 @@ export const validateSignup = (
 ): void => {
   try {
     validateSignupData(req.body);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const validateMakeConnectionRequest = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    validateMakeConnectionRequestData(req.params);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const validateReviewConnectionRequest = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    validateReviewConnectionRequestData(req.params);
     next();
   } catch (error) {
     next(error);
@@ -101,6 +129,27 @@ export const validateEmailQuery = (
   }
 };
 
+export const validatePasswordReset = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      throw new BadRequestError('New password is required');
+    }
+    if (!validatePassword(password)) {
+      throw new BadRequestError(
+        'Password must be at least 8 characters long and contain at least one letter and one number'
+      );
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const validatePaginationQuery = (
   req: Request,
   _res: Response,
@@ -115,8 +164,6 @@ export const validatePaginationQuery = (
         'Invalid pagination parameters. Page must be >= 1, limit must be 1-100'
       );
     }
-
-    // Attach validated values to request for use in controller
     req.pagination = { page, limit };
     next();
   } catch (error) {

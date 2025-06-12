@@ -1,5 +1,5 @@
 import { User } from './user';
-
+import { ConnectionRequests } from './connectionRequests';
 declare module 'express' {
   interface Request {
     pagination?: {
@@ -10,4 +10,4 @@ declare module 'express' {
   }
 }
 
-export type { User };
+export type { User, ConnectionRequests };
