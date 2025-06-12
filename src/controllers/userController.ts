@@ -70,19 +70,43 @@ export const getAllUsers = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const loggedInUserId = req.user?._id;
+  if (!loggedInUserId) {
+    throw new NotFoundError('User not found');
+  }
   const page = req.pagination?.page ?? 1;
   const limit = req.pagination?.limit ?? 10;
   const skip = (page - 1) * limit;
 
-  const users = await UserModel.find()
-    .select('-password')
+  const connectionRequests = await ConnectionRequestsModel.find({
+    $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
+  }).select(['fromUserId', 'toUserId']);
+
+  const hideUsersFromFeed = new Set();
+
+  connectionRequests.forEach(row => {
+    hideUsersFromFeed.add(row?.fromUserId?.toString());
+    hideUsersFromFeed.add(row?.toUserId?.toString());
+  });
+
+  const users = await UserModel.find({
+    $and: [
+      { _id: { $nin: Array.from(hideUsersFromFeed) } },
+      { _id: { $ne: loggedInUserId } },
+    ],
+  })
+    .select(USER_SAFE_DATA)
     .skip(skip)
     .limit(limit)
     .sort({ createdAt: -1 });
 
-  const total = await UserModel.countDocuments();
+  const total = await UserModel.countDocuments({
+    $and: [
+      { _id: { $nin: Array.from(hideUsersFromFeed) } },
+      { _id: { $ne: loggedInUserId } },
+    ],
+  });
   const totalPages = Math.ceil(total / limit);
-
   res.status(200).json({
     users,
     pagination: {
