@@ -67,7 +67,8 @@ export const validateName = (name: string): boolean => {
 };
 
 export const validateObjectId = (id: string): boolean => {
-  if (!id || typeof id !== 'string') {
+  console.log(id);
+  if (!id) {
     throw new ValidationError('ID must be a non-empty string');
   }
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -313,17 +314,26 @@ export const validateUpdateData = (data: User): void => {
 export const validateMakeConnectionRequestData = (
   data: ConnectionRequests | undefined
 ): void => {
-  const { toUserId, status } = data || {};
-  if (!toUserId || !status) {
-    throw new ValidationError('All required fields must be provided', {
-      required: ['toUserId', 'status'],
-    });
+  if (!data) {
+    throw new ValidationError('Request data is required');
   }
+
+  const { toUserId, status } = data;
+
+  if (!toUserId) {
+    throw new ValidationError('Target user ID is required');
+  }
+
   if (!validateObjectId(toUserId.toString())) {
-    throw new BadRequestError('Invalid user ID format');
+    throw new ValidationError('Invalid target user ID format');
   }
-  if (!['ignore', 'interested'].includes(status)) {
-    throw new ValidationError('Status must be either "ignore" or "interested"');
+
+  if (!status) {
+    throw new ValidationError('Status is required');
+  }
+
+  if (!validateStatus(status)) {
+    throw new ValidationError('Invalid status value');
   }
 };
 
