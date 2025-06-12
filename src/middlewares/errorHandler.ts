@@ -5,7 +5,7 @@ import { config } from '../config/app.config';
 interface ErrorResponse {
   message: string;
   details?: Record<string, unknown>;
-  stack?: string;
+  code?: string;
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const handleMongooseValidationError = (error: any): AppError => {
@@ -48,11 +48,13 @@ export const globalErrorHandler = (
   let statusCode = 500;
   let message = 'Internal server error';
   let details: Record<string, unknown> | undefined;
+  let code: string | undefined;
 
   if (error instanceof AppError) {
     statusCode = error.statusCode;
     message = error.message;
     details = error.details;
+    code = error.code;
   }
 
   console.error('Error:', {
@@ -68,10 +70,11 @@ export const globalErrorHandler = (
   const errorResponse: ErrorResponse = {
     message,
     ...(details && { details }),
+    ...(code && { code }),
   };
 
-  if (config.env === 'development' && error.stack) {
-    errorResponse.stack = error.stack;
+  if (config.env === 'development') {
+    console.error('Stack:', error.stack);
   }
 
   res.status(statusCode).json(errorResponse);
