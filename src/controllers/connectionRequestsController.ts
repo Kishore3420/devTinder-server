@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ConflictError, NotFoundError } from '../utils/errors';
+import { ConflictError, NotFoundError, BadRequestError } from '../utils/errors';
 import { ConnectionRequestsModel } from '../models/connectionRequests';
 import { UserModel } from '../models/user';
 import { ConnectionRequestStatus } from '../types/connectionRequests';
@@ -16,7 +16,11 @@ export const makeConnectionRequest = async (
   if (!toUserId) {
     throw new NotFoundError('Target user ID is required');
   }
-  const status = req.params.status;
+  const status = req.params.status as string;
+
+  if (fromUserId.toString() === toUserId) {
+    throw new BadRequestError('Cannot send connection request to yourself');
+  }
 
   const newConnectionRequest = new ConnectionRequestsModel({
     fromUserId,
@@ -29,7 +33,6 @@ export const makeConnectionRequest = async (
     throw new NotFoundError('User to connect not Found');
   }
 
-  //If there is an existing connectionRequest
   const existingConnectionRequest = await ConnectionRequestsModel.findOne({
     $or: [
       { fromUserId, toUserId },
@@ -48,6 +51,7 @@ export const makeConnectionRequest = async (
     connectionRequest: savedConnectionRequest,
   });
 };
+
 export const reviewConnectionRequest = async (
   req: Request,
   res: Response
@@ -60,7 +64,7 @@ export const reviewConnectionRequest = async (
   if (!toUserId) {
     throw new NotFoundError('Target user ID is required');
   }
-  const status = req.params.status;
+  const status = req.params.status as string;
 
   const connectionRequest = await ConnectionRequestsModel.findOne({
     fromUserId: toUserId,
@@ -73,7 +77,7 @@ export const reviewConnectionRequest = async (
 
   connectionRequest.status = status as ConnectionRequestStatus;
   const updatedConnectionRequest = await connectionRequest.save();
-  res.status(201).json({
+  res.status(200).json({
     message: 'Connection Request updated Successfully',
     connectionRequest: updatedConnectionRequest,
   });

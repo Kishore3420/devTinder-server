@@ -72,7 +72,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   if (!user) {
     throw new NotFoundError('User not found');
   }
-  const isPasswordValid = user.verifyPassword(password);
+  const isPasswordValid = await user.verifyPassword(password);
   if (!isPasswordValid) {
     throw new NotFoundError('Invalid email or password');
   }

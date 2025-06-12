@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/user';
 import { User } from '../types';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, BadRequestError } from '../utils/errors';
 import { sanitizeUserData } from '../utils/sanitize';
 import bcrypt from 'bcrypt';
 import { config } from '../config/app.config';
@@ -50,7 +50,7 @@ export const resetPassword = async (
   }
   const { password } = req.body;
   if (!password) {
-    throw new Error('Password is required');
+    throw new BadRequestError('Password is required');
   }
   const hashedPassword = await bcrypt.hash(password, config.jwt.saltRounds);
 
