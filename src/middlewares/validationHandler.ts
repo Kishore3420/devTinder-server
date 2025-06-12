@@ -11,6 +11,92 @@ import {
 } from '../utils/validators';
 import { BadRequestError } from '../utils/errors';
 
+// Header validation middleware
+export const validateHeaders = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const contentType = req.headers['content-type'];
+    if (
+      req.method === 'POST' ||
+      req.method === 'PUT' ||
+      req.method === 'PATCH'
+    ) {
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new BadRequestError('Content-Type must be application/json');
+      }
+    }
+
+    // Validate Accept header if present
+    const accept = req.headers.accept;
+    if (accept && !accept.includes('application/json')) {
+      throw new BadRequestError('Accept header must be application/json');
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Query parameter validation middleware
+export const validateQueryParams = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    // Validate sort parameter if present
+    const sort = req.query.sort as string;
+    if (sort) {
+      const validSortFields = [
+        'createdAt',
+        'updatedAt',
+        'firstName',
+        'lastName',
+      ];
+      const [field, order] = sort.split(':');
+      if (
+        !field ||
+        !validSortFields.includes(field) ||
+        !order ||
+        !['asc', 'desc'].includes(order.toLowerCase())
+      ) {
+        throw new BadRequestError(
+          `Invalid sort parameter. Must be one of: ${validSortFields.join(', ')} with :asc or :desc`
+        );
+      }
+    }
+
+    // Validate filter parameter if present
+    const filter = req.query.filter as string;
+    if (filter) {
+      try {
+        const filterObj = JSON.parse(filter);
+        const validFilterFields = ['gender', 'age', 'skills'];
+        const invalidFields = Object.keys(filterObj).filter(
+          field => !validFilterFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+          throw new BadRequestError(
+            `Invalid filter fields: ${invalidFields.join(', ')}. Valid fields are: ${validFilterFields.join(', ')}`
+          );
+        }
+      } catch (e) {
+        throw new BadRequestError(
+          'Invalid filter parameter format. Must be a valid JSON string'
+        );
+      }
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const validateSignup = (
   req: Request,
   _res: Response,

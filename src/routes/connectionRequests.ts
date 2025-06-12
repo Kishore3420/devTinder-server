@@ -8,6 +8,7 @@ import { userAuthentication } from '../middlewares/authenticationHandler';
 import {
   validateMakeConnectionRequest,
   validateReviewConnectionRequest,
+  validateHeaders,
 } from '../middlewares/validationHandler';
 
 const router = Router();
@@ -26,7 +27,7 @@ const router = Router();
  *         required: true
  *         schema:
  *           type: string
- *           enum: [like, superlike]
+ *           enum: [interested, ignore]
  *         description: Type of connection request
  *       - in: path
  *         name: toUserId
@@ -62,6 +63,7 @@ const router = Router();
  */
 router.post(
   '/send/:status/:toUserId',
+  validateHeaders,
   userAuthentication,
   validateMakeConnectionRequest,
   asyncHandler(makeConnectionRequest)
@@ -117,6 +119,7 @@ router.post(
  */
 router.post(
   '/review/:status/:toUserId',
+  validateHeaders,
   userAuthentication,
   validateReviewConnectionRequest,
   asyncHandler(reviewConnectionRequest)

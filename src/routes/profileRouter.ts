@@ -4,6 +4,8 @@ import { asyncHandler } from '../middlewares/errorHandler';
 import {
   validatePasswordReset,
   validateUpdate,
+  validateHeaders,
+  validateQueryParams,
 } from '../middlewares/validationHandler';
 import { userAuthentication } from '../middlewares/authenticationHandler';
 
@@ -48,7 +50,13 @@ const router = Router();
  *       401:
  *         description: Not authenticated
  */
-router.get('/view', userAuthentication, asyncHandler(view));
+router.get(
+  '/view',
+  validateHeaders,
+  validateQueryParams,
+  userAuthentication,
+  asyncHandler(view)
+);
 
 /**
  * @swagger
@@ -99,6 +107,7 @@ router.get('/view', userAuthentication, asyncHandler(view));
  */
 router.patch(
   '/update',
+  validateHeaders,
   userAuthentication,
   validateUpdate,
   asyncHandler(update)
@@ -134,6 +143,7 @@ router.patch(
  */
 router.post(
   '/reset-password',
+  validateHeaders,
   userAuthentication,
   validatePasswordReset,
   asyncHandler(resetPassword)

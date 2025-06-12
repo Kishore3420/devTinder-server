@@ -7,7 +7,11 @@ import {
 
 import { userAuthentication } from '../middlewares/authenticationHandler';
 import { asyncHandler } from '../middlewares/errorHandler';
-import { validatePaginationQuery } from '../middlewares/validationHandler';
+import {
+  validatePaginationQuery,
+  validateHeaders,
+  validateQueryParams,
+} from '../middlewares/validationHandler';
 
 const router = Router();
 
@@ -43,6 +47,8 @@ const router = Router();
  */
 router.get(
   '/requests/received',
+  validateHeaders,
+  validateQueryParams,
   userAuthentication,
   asyncHandler(getUserRequests)
 );
@@ -79,6 +85,8 @@ router.get(
  */
 router.get(
   '/requests/connections',
+  validateHeaders,
+  validateQueryParams,
   userAuthentication,
   asyncHandler(getUserConnections)
 );
@@ -132,8 +140,10 @@ router.get(
  */
 router.get(
   '/feed',
-  userAuthentication,
+  validateHeaders,
+  validateQueryParams,
   validatePaginationQuery,
+  userAuthentication,
   asyncHandler(getAllUsers)
 );
 
