@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
+import { config } from '../config/app.config';
 
 interface ErrorResponse {
   message: string;
@@ -69,7 +70,7 @@ export const globalErrorHandler = (
     ...(details && { details }),
   };
 
-  if (process.env.NODE_ENV === 'development' && error.stack) {
+  if (config.env === 'development' && error.stack) {
     errorResponse.stack = error.stack;
   }
 

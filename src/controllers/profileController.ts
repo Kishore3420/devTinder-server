@@ -4,7 +4,7 @@ import { User } from '../types';
 import { NotFoundError } from '../utils/errors';
 import { sanitizeUserData } from '../utils/sanitize';
 import bcrypt from 'bcrypt';
-const { BCRYPT_SALT_ROUNDS } = process.env;
+import { config } from '../config/app.config';
 
 export const view = async (req: Request, res: Response): Promise<void> => {
   const user = req.user as User;
@@ -52,9 +52,7 @@ export const resetPassword = async (
   if (!password) {
     throw new Error('Password is required');
   }
-
-  const saltRounds = BCRYPT_SALT_ROUNDS ? parseInt(BCRYPT_SALT_ROUNDS, 10) : 12;
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const hashedPassword = await bcrypt.hash(password, config.jwt.saltRounds);
 
   const updatedUser = await UserModel.findByIdAndUpdate(
     userId,

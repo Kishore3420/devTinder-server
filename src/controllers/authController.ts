@@ -3,8 +3,7 @@ import bcrypt from 'bcrypt';
 import { UserModel } from '../models/user';
 import { User } from '../types';
 import { NotFoundError, ConflictError } from '../utils/errors';
-
-const { BCRYPT_SALT_ROUNDS } = process.env;
+import { config } from '../config/app.config';
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const {
@@ -27,8 +26,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     throw new ConflictError('Email already registered');
   }
 
-  const saltRounds = BCRYPT_SALT_ROUNDS ? parseInt(BCRYPT_SALT_ROUNDS, 10) : 12;
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const hashedPassword = await bcrypt.hash(password, config.jwt.saltRounds);
 
   const userObj: Partial<User> = {
     firstName: firstName.trim(),
@@ -82,7 +80,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const token = await user.getJWT();
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.env === 'production',
     maxAge: 3600000,
   });
 
@@ -97,7 +95,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const logout = async (_req: Request, res: Response): Promise<void> => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.env === 'production',
   });
 
   res.status(200).json({

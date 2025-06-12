@@ -1,8 +1,9 @@
 import { User } from '../types/user';
 import { Schema, model } from 'mongoose';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import validator from 'validator';
+import { config } from '../config/app.config';
 
 const userSchema = new Schema<User>(
   {
@@ -223,9 +224,9 @@ userSchema.methods.verifyPassword = async function (
   return await bcrypt.compare(passwordInputByUser, actualPassword);
 };
 userSchema.methods.getJWT = async function (): Promise<string> {
-  const secret = process.env.JWT_SECRET || 'DEV@TINDER';
-  const token = jwt.sign({ userId: this._id }, secret, { expiresIn: '1h' });
-  return token;
+  return jwt.sign({ userId: this._id }, config.jwt.secret, {
+    expiresIn: config.jwt.expiresIn,
+  } as SignOptions);
 };
 
 userSchema.statics.findBySkill = function (skill: string): Promise<User[]> {

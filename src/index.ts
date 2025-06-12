@@ -4,9 +4,11 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './config/database';
 import { config } from './config/app.config';
 import logger from './config/logger.config';
+import { swaggerSpec } from './config/swagger.config';
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRouter';
 import profileRoutes from './routes/profileRouter';
@@ -44,6 +46,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
   next();
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', (_req, res) => {
   res.status(200).json({
@@ -102,6 +106,9 @@ const startServer = async (): Promise<void> => {
     const server = app.listen(config.port, () => {
       logger.info(`Server running on port ${config.port}`);
       logger.info(`Health check: http://localhost:${config.port}/health`);
+      logger.info(
+        `API Documentation: http://localhost:${config.port}/api-docs`
+      );
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     server.on('error', (error: any) => {

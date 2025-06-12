@@ -7,7 +7,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../utils/errors';
-const { JWT_SECRET = 'DEV@TINDER' } = process.env;
+import { config } from '../config/app.config';
 
 export const userAuthentication = async (
   req: Request,
@@ -19,7 +19,7 @@ export const userAuthentication = async (
     return next(new BadRequestError('Authentication token is missing'));
   }
   try {
-    const decodedToken = jwt.verify(token, JWT_SECRET);
+    const decodedToken = jwt.verify(token, config.jwt.secret);
     const userId = (decodedToken as { userId: string }).userId;
     if (!userId) {
       return next(new ConflictError('Invalid token'));

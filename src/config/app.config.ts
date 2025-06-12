@@ -6,6 +6,7 @@ const envSchema = z.object({
     .default('development'),
   PORT: z.string().default('3000'),
   MONGODB_URI: z.string(),
+  SALT_ROUNDS: z.string(),
   JWT_SECRET: z.string(),
   JWT_EXPIRES_IN: z.string().default('7d'),
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
@@ -22,6 +23,7 @@ export const config = {
     uri: env.MONGODB_URI,
   },
   jwt: {
+    saltRounds: parseInt(env.SALT_ROUNDS, 10),
     secret: env.JWT_SECRET,
     expiresIn: env.JWT_EXPIRES_IN,
   },
