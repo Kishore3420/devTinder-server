@@ -1,6 +1,12 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import { connectDB } from './config/database';
+import { config } from './config/app.config';
+import logger from './config/logger.config';
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRouter';
 import profileRoutes from './routes/profileRouter';
@@ -10,11 +16,34 @@ import { NotFoundError } from './utils/errors';
 import cookieParser from 'cookie-parser';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+app.use(helmet());
+app.use(
+  cors({
+    origin: config.cors.origin,
+    credentials: true,
+  })
+);
+
+const limiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max,
+  message: 'Too many requests from this IP, please try again later.',
+});
+app.use(limiter);
+
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  logger.info(`${req.method} ${req.url}`, {
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  });
+  next();
+});
 
 app.get('/health', (_req, res) => {
   res.status(200).json({
@@ -35,50 +64,56 @@ app.all('*', (req, _res, next) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  logger.error('Error:', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
   globalErrorHandler(err, req, res, next);
 });
 
 const gracefulShutdown = (signal: string): void => {
-  console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
-
+  logger.info(`Received ${signal}. Starting graceful shutdown...`);
   process.exit(0);
 };
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection:', { reason, promise });
   process.exit(1);
 });
 
 process.on('uncaughtException', (error: Error) => {
-  console.error('Uncaught Exception:', error);
+  logger.error('Uncaught Exception:', {
+    error: error.message,
+    stack: error.stack,
+  });
   process.exit(1);
 });
 
 const startServer = async (): Promise<void> => {
   try {
     await connectDB();
-    console.log('✅ Connected to MongoDB');
+    logger.info('Connected to MongoDB');
 
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📱 Health check: http://localhost:${PORT}/health`);
+    const server = app.listen(config.port, () => {
+      logger.info(`Server running on port ${config.port}`);
+      logger.info(`Health check: http://localhost:${config.port}/health`);
     });
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     server.on('error', (error: any) => {
       if (error.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${PORT} is already in use`);
+        logger.error(`Port ${config.port} is already in use`);
       } else {
-        console.error('❌ Server error:', error);
+        logger.error('Server error:', error);
       }
       process.exit(1);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };
