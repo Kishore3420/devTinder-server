@@ -3,6 +3,7 @@ import { ConflictError, NotFoundError, BadRequestError } from '../utils/errors';
 import { ConnectionRequestsModel } from '../models/connectionRequests';
 import { UserModel } from '../models/user';
 import { ConnectionRequestStatus } from '../types/connectionRequests';
+import mongoose from 'mongoose';
 
 export const makeConnectionRequest = async (
   req: Request,
@@ -12,31 +13,42 @@ export const makeConnectionRequest = async (
   if (!fromUserId) {
     throw new NotFoundError('User not authenticated');
   }
-  const toUserId = req.params.toUserId;
-  if (!toUserId) {
-    throw new NotFoundError('Target user ID is required');
+
+  const { toUserId, status } = req.params;
+  if (!toUserId || !status) {
+    throw new BadRequestError('Target user ID and status are required');
   }
-  const status = req.params.status as string;
 
   if (fromUserId.toString() === toUserId) {
     throw new BadRequestError('Cannot send connection request to yourself');
   }
 
-  const newConnectionRequest = new ConnectionRequestsModel({
-    fromUserId,
-    toUserId,
-    status,
-  });
+  const fromUserObjectId = new mongoose.Types.ObjectId(fromUserId);
+  const toUserObjectId = new mongoose.Types.ObjectId(toUserId);
 
-  const isUserToConnectExist = await UserModel.findById(toUserId);
-  if (!isUserToConnectExist) {
+  const [fromUser, toUser] = await Promise.all([
+    UserModel.findById(fromUserObjectId),
+    UserModel.findById(toUserObjectId),
+  ]);
+
+  if (!toUser) {
     throw new NotFoundError('User to connect not Found');
   }
 
+  if (!fromUser) {
+    throw new NotFoundError('Sender user not found');
+  }
+
+  const newConnectionRequest = new ConnectionRequestsModel({
+    fromUserId: fromUserObjectId,
+    toUserId: toUserObjectId,
+    status,
+  });
+
   const existingConnectionRequest = await ConnectionRequestsModel.findOne({
     $or: [
-      { fromUserId, toUserId },
-      { fromUserId: toUserId, toUserId: fromUserId },
+      { fromUserId: fromUserObjectId, toUserId: toUserObjectId },
+      { fromUserId: toUserObjectId, toUserId: fromUserObjectId },
     ],
   });
 
@@ -46,8 +58,26 @@ export const makeConnectionRequest = async (
 
   const savedConnectionRequest = await newConnectionRequest.save();
 
+  let message = '';
+  switch (status) {
+    case 'ignore':
+      message = `You have ignored ${toUser.firstName}'s profile`;
+      break;
+    case 'interested':
+      message = `You have shown interest in ${toUser.firstName}'s profile`;
+      break;
+    case 'accepted':
+      message = `You have accepted ${toUser.firstName}'s connection request`;
+      break;
+    case 'rejected':
+      message = `You have rejected ${toUser.firstName}'s connection request`;
+      break;
+    default:
+      message = 'Connection Request Sent Successfully';
+  }
+
   res.status(201).json({
-    message: 'Connection Request Sent Successfully',
+    message,
     connectionRequest: savedConnectionRequest,
   });
 };
@@ -60,25 +90,57 @@ export const reviewConnectionRequest = async (
   if (!loggedInUserId) {
     throw new NotFoundError('User not authenticated');
   }
-  const toUserId = req.params.toUserId;
-  if (!toUserId) {
-    throw new NotFoundError('Target user ID is required');
+
+  const { toUserId, status } = req.params;
+  if (!toUserId || !status) {
+    throw new BadRequestError('Target user ID and status are required');
   }
-  const status = req.params.status as string;
+
+  const loggedInUserObjectId = new mongoose.Types.ObjectId(loggedInUserId);
+  const toUserObjectId = new mongoose.Types.ObjectId(toUserId);
+
+  const [loggedInUser, fromUser] = await Promise.all([
+    UserModel.findById(loggedInUserObjectId),
+    UserModel.findById(toUserObjectId),
+  ]);
+
+  if (!loggedInUser || !fromUser) {
+    throw new NotFoundError('User not found');
+  }
 
   const connectionRequest = await ConnectionRequestsModel.findOne({
-    fromUserId: toUserId,
-    toUserId: loggedInUserId,
+    fromUserId: toUserObjectId,
+    toUserId: loggedInUserObjectId,
     status: 'interested',
   });
+
   if (!connectionRequest) {
     throw new NotFoundError('Connection request not found');
   }
 
   connectionRequest.status = status as ConnectionRequestStatus;
   const updatedConnectionRequest = await connectionRequest.save();
+
+  let message = '';
+  switch (status) {
+    case 'ignore':
+      message = `You have ignored ${fromUser.firstName}'s profile`;
+      break;
+    case 'interested':
+      message = `You have shown interest in ${fromUser.firstName}'s profile`;
+      break;
+    case 'accepted':
+      message = `You have accepted ${fromUser.firstName}'s connection request`;
+      break;
+    case 'rejected':
+      message = `You have rejected ${fromUser.firstName}'s connection request`;
+      break;
+    default:
+      message = 'Connection Request updated Successfully';
+  }
+
   res.status(200).json({
-    message: 'Connection Request updated Successfully',
+    message,
     connectionRequest: updatedConnectionRequest,
   });
 };

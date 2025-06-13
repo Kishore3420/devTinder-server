@@ -11,7 +11,6 @@ import {
 } from '../utils/validators';
 import { BadRequestError } from '../utils/errors';
 
-// Header validation middleware
 export const validateHeaders = (
   req: Request,
   _res: Response,
@@ -29,7 +28,6 @@ export const validateHeaders = (
       }
     }
 
-    // Validate Accept header if present
     const accept = req.headers.accept;
     if (accept && !accept.includes('application/json')) {
       throw new BadRequestError('Accept header must be application/json');
@@ -41,14 +39,12 @@ export const validateHeaders = (
   }
 };
 
-// Query parameter validation middleware
 export const validateQueryParams = (
   req: Request,
   _res: Response,
   next: NextFunction
 ): void => {
   try {
-    // Validate sort parameter if present
     const sort = req.query.sort as string;
     if (sort) {
       const validSortFields = [
@@ -70,7 +66,6 @@ export const validateQueryParams = (
       }
     }
 
-    // Validate filter parameter if present
     const filter = req.query.filter as string;
     if (filter) {
       try {

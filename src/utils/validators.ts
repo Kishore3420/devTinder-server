@@ -9,7 +9,6 @@ export const validateEmail = (email: string): boolean => {
     throw new ValidationError('Email must be a non-empty string');
   }
   if (email.length > 254) {
-    // RFC 5321
     throw new ValidationError(
       'Email address is too long (maximum 254 characters)'
     );
@@ -161,7 +160,6 @@ export const validateSkills = (skills: string[]): boolean => {
     );
   }
 
-  // Check for duplicate skills
   const uniqueSkills = new Set(skills.map(s => s.toLowerCase()));
   if (uniqueSkills.size !== skills.length) {
     throw new ValidationError('Duplicate skills are not allowed');
