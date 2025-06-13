@@ -1,8 +1,9 @@
-import validator from 'validator';
 import mongoose from 'mongoose';
+import validator from 'validator';
+
 import { User } from '../types/user';
-import { BadRequestError, ValidationError } from './errors';
 import { ConnectionRequests } from '../types';
+import { BadRequestError, ValidationError } from './errors';
 
 export const validateEmail = (email: string): boolean => {
   if (!email || typeof email !== 'string') {

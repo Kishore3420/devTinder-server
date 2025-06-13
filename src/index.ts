@@ -1,21 +1,21 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
-import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import compression from 'compression';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './config/database';
 import { config } from './config/app.config';
 import logger from './config/logger.config';
 import { swaggerSpec } from './config/swagger.config';
+import { globalErrorHandler } from './middlewares/errorHandler';
+import { NotFoundError } from './utils/errors';
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRouter';
 import profileRoutes from './routes/profileRouter';
 import connectionRequestsRoutes from './routes/connectionRequests';
-import { globalErrorHandler } from './middlewares/errorHandler';
-import { NotFoundError } from './utils/errors';
-import cookieParser from 'cookie-parser';
 
 const app = express();
 

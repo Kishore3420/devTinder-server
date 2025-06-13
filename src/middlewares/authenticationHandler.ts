@@ -1,13 +1,14 @@
-import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+
 import { UserModel } from '../models/user';
+import { config } from '../config/app.config';
 import {
   BadRequestError,
   ConflictError,
   NotFoundError,
   ValidationError,
 } from '../utils/errors';
-import { config } from '../config/app.config';
+import { Request, Response, NextFunction } from 'express';
 
 export const userAuthentication = async (
   req: Request,

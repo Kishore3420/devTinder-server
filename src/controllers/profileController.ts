@@ -62,7 +62,14 @@ export const resetPassword = async (
   if (!updatedUser) {
     throw new NotFoundError('User not found');
   }
+
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: config.env === 'production',
+  });
+
   res.status(200).json({
-    message: 'Password reset successfully',
+    message:
+      'Password reset successfully. Please login with your new password.',
   });
 };

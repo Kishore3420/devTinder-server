@@ -1,8 +1,9 @@
-import { User } from '../types/user';
 import { Schema, model } from 'mongoose';
-import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import validator from 'validator';
+
+import { User } from '../types/user';
 import { config } from '../config/app.config';
 
 const userSchema = new Schema<User>(

@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+
+import { BadRequestError } from '../utils/errors';
 import {
   validateObjectId,
   validateEmail,
@@ -9,7 +11,6 @@ import {
   validateMakeConnectionRequestData,
   validateReviewConnectionRequestData,
 } from '../utils/validators';
-import { BadRequestError } from '../utils/errors';
 
 export const validateHeaders = (
   req: Request,
