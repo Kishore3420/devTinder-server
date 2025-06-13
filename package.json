@@ -15,15 +15,19 @@
     "dev": "nodemon src/index.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts",
-    "format:check": "prettier --check src/**/*.ts",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:file": "jest --testNamePattern",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
-    "prestart": "npm run build"
+    "prestart": "npm run build",
+    "prepare": "husky",
+    "sonar": "sonar-scanner",
+    "check-all": "npm run format:check && npm run lint && npm run test",
+    "fix-all": "npm run format && npm run lint:fix"
   },
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -69,6 +73,19 @@
     "supertest": "^7.1.1",
     "ts-jest": "^29.3.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "sonarqube-scanner": "^2.8.1"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "prettier --write",
+      "eslint --fix",
+      "jest --bail --findRelatedTests"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }
